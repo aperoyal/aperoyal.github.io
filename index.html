@@ -1350,6 +1350,65 @@ function startCourt(ca){
   courtTimer = setInterval(() => fetchCourt(ca), 90000);
 }
 
+/* ============ ON-CHAIN TRADE WATCHER ============
+   PumpPortal's trade feed became key-gated, so we read trades straight from
+   the chain: every trade moves SOL in/out of the coin's bonding-curve
+   account. Poll its signatures, fetch each new tx, and the SOL delta tells
+   us buy vs sell, how much, and who. */
+let pollTimer = null;
+let curveAddr = null;
+let pollBootstrapped = false;
+const seenSigs = new Set();
+
+async function startChainPoll(ca){
+  stopChainPoll();
+  pollBootstrapped = false;
+  curveAddr = null;
+  seenSigs.clear();
+  try {
+    const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://frontend-api-v3.pump.fun/coins/' + ca);
+    const j = await fetch(url).then(r => r.json());
+    if (j && j.bonding_curve) curveAddr = j.bonding_curve;
+  } catch(e){}
+  if (!curveAddr){
+    addEvent('sys', 'Locating the coin on-chain — retrying in 15s');
+    pollTimer = setTimeout(() => startChainPoll(ca), 15000);
+    return;
+  }
+  addEvent('sys', 'Watching the blockchain directly for trades ⛓️');
+  pollLoop();
+}
+function stopChainPoll(){ if (pollTimer){ clearTimeout(pollTimer); pollTimer = null; } }
+
+async function pollLoop(){
+  try {
+    const sigs = await rpc('getSignaturesForAddress', [curveAddr, { limit: 12, commitment: 'confirmed' }]);
+    const fresh = sigs.filter(s => !seenSigs.has(s.signature) && !s.err).reverse(); // oldest first
+    // first sweep: replay the 8 most recent trades so the arena isn't empty
+    const batch = pollBootstrapped ? fresh.slice(0, 6) : fresh.slice(-8);
+    if (!pollBootstrapped){ sigs.forEach(s => seenSigs.add(s.signature)); pollBootstrapped = true; }
+    for (const s of batch){
+      seenSigs.add(s.signature);
+      await new Promise(r => setTimeout(r, 600));
+      try { await processTx(s.signature); } catch(e){ /* busy rpc — drop this one */ }
+    }
+  } catch(e){ /* rpc busy — try again next cycle */ }
+  pollTimer = setTimeout(pollLoop, 4000);
+}
+
+async function processTx(sig){
+  const tx = await rpc('getTransaction', [sig, { encoding:'jsonParsed', maxSupportedTransactionVersion: 0, commitment: 'confirmed' }]);
+  if (!tx || !tx.meta || tx.meta.err) return;
+  const keys = tx.transaction.message.accountKeys.map(k => typeof k === 'string' ? k : k.pubkey);
+  const ci = keys.indexOf(curveAddr);
+  if (ci < 0) return;
+  const delta = (tx.meta.postBalances[ci] - tx.meta.preBalances[ci]) / 1e9;
+  if (Math.abs(delta) < 0.001) return;   // rent/noise, not a trade
+  const trader = keys[0];                // fee payer = the trader
+  if (delta > 0) spawnBuy(trader, delta);
+  else spawnSell(trader, -delta);
+}
+
 /* ============ PUMPPORTAL WEBSOCKET ============ */
 const statusEl = document.getElementById('status');
 function setStatus(txt, cls){ statusEl.textContent = '● ' + txt; statusEl.className = cls || ''; }
@@ -1366,10 +1425,15 @@ function connect(ca){
     addEvent('sys', `Connected — watching trades on ${shortWallet(ca)}`);
     document.getElementById('footerCa').innerHTML = `CA: <span class="ca">${ca}</span>`;
     startCourt(ca);
+    startChainPoll(ca);
   };
   ws.onmessage = (ev) => {
     let d; try { d = JSON.parse(ev.data); } catch(e){ return; }
     if (!d || !d.txType) return;
+    if (d.signature){                          // dedupe against the on-chain poller
+      if (seenSigs.has(d.signature)) return;
+      seenSigs.add(d.signature);
+    }
     const sol = Number(d.solAmount) || 0;
     const trader = d.traderPublicKey || 'unknown';
     if (d.txType === 'buy' && sol > 0) spawnBuy(trader, sol);
@@ -1425,6 +1489,7 @@ function stopDemo(){
 document.getElementById('demoBtn').addEventListener('click', () => {
   if (demoTimer){ stopDemo(); setStatus(wsAlive ? 'LIVE · ' + shortWallet(subscribedCA) : 'offline', wsAlive ? 'live' : ''); return; }
   if (ws){ subscribedCA = null; try{ ws.close(); }catch(e){} ws = null; }
+  stopChainPoll();
   document.getElementById('demoBtn').classList.add('active-demo');
   document.getElementById('demoBtn').textContent = 'Stop Demo';
   setStatus('DEMO MODE', 'live');
