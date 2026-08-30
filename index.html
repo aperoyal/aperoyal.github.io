@@ -1405,14 +1405,43 @@ async function pollLoop(){
 async function processTx(sig){
   const tx = await rpc('getTransaction', [sig, { encoding:'jsonParsed', maxSupportedTransactionVersion: 0, commitment: 'confirmed' }]);
   if (!tx || !tx.meta || tx.meta.err) return;
-  const keys = tx.transaction.message.accountKeys.map(k => typeof k === 'string' ? k : k.pubkey);
-  const ci = keys.indexOf(curveAddr);
-  if (ci < 0) return;
-  const delta = (tx.meta.postBalances[ci] - tx.meta.preBalances[ci]) / 1e9;
-  if (Math.abs(delta) < 0.001) return;   // rent/noise, not a trade
-  const trader = keys[0];                // fee payer = the trader
-  if (delta > 0) spawnBuy(trader, delta);
-  else spawnSell(trader, -delta);
+  const msgKeys = tx.transaction.message.accountKeys.map(k => typeof k === 'string' ? k : k.pubkey);
+  // token movements of OUR mint, grouped by owner (curve loses tokens = buy)
+  const pre = tx.meta.preTokenBalances || [], post = tx.meta.postTokenBalances || [];
+  const deltas = {};
+  const preByIdx = {};
+  pre.forEach(b => { if (b.mint === subscribedCA) preByIdx[b.accountIndex] = b; });
+  const idxSeen = new Set();
+  post.forEach(b => {
+    if (b.mint !== subscribedCA) return;
+    idxSeen.add(b.accountIndex);
+    const p = preByIdx[b.accountIndex];
+    const d = (Number(b.uiTokenAmount.uiAmount) || 0) - (p ? (Number(p.uiTokenAmount.uiAmount) || 0) : 0);
+    deltas[b.owner] = (deltas[b.owner] || 0) + d;
+  });
+  pre.forEach(b => {  // token accounts emptied and closed only appear in pre
+    if (b.mint !== subscribedCA || idxSeen.has(b.accountIndex)) return;
+    deltas[b.owner] = (deltas[b.owner] || 0) - (Number(b.uiTokenAmount.uiAmount) || 0);
+  });
+  const curveTokD = deltas[curveAddr] || 0;
+  if (Math.abs(curveTokD) < 1) return;      // curve tokens didn't move → not a trade
+  const isBuy = curveTokD < 0;
+  // trader = the counterparty whose tokens moved opposite the curve
+  let trader = null, biggest = 0;
+  for (const owner in deltas){
+    if (owner === curveAddr) continue;
+    const d = deltas[owner];
+    if (Math.abs(d) > biggest && (d > 0) === isBuy){ biggest = Math.abs(d); trader = owner; }
+  }
+  const feePayer = msgKeys[0];
+  if (!trader) trader = feePayer;
+  // SOL size: the trader's own balance change; bots route fees, so fall back
+  const solOf = addr => { const i = msgKeys.indexOf(addr); return i >= 0 ? (tx.meta.postBalances[i] - tx.meta.preBalances[i]) / 1e9 : 0; };
+  let sol = Math.abs(solOf(trader));
+  if (sol < 0.002) sol = Math.abs(solOf(feePayer));
+  if (sol < 0.002) sol = 0.01;              // dust trade — still spawns a small ape
+  if (isBuy) spawnBuy(trader, sol);
+  else spawnSell(trader, sol);
 }
 
 /* ============ PUMPPORTAL WEBSOCKET ============ */
