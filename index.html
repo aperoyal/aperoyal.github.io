@@ -391,7 +391,7 @@ function ensureAudio(){
     }
     // browsers often create the context suspended — resume until it runs
     if (AC.state !== 'running') AC.resume();
-    startMusic();
+    // background music disabled — sfx only (startMusic() re-enables it)
   } catch(e){ /* no audio support */ }
 }
 // browsers only allow sound after a user gesture; keep trying until it's running
