@@ -329,6 +329,8 @@
     launch it on pump.fun. The page will then auto-connect to your coin for
     every visitor — no pasting needed. Leave empty '' to show the input box. */
 const MY_COIN_CA = '44HhSvA3NqUZgeWjnDXMMamUYqwS2JoncpJDkXb9pump';
+/* the coin's bonding-curve account (all trades move SOL through it) */
+const MY_COIN_CURVE = '3fMUkNpmWwWSRonLeztTp6CGehsRsn4fS27W5GoH5fxt';
 
 const ROUND_MS = 5 * 60 * 1000;
 const MAX_MONKEYS = 60;
@@ -1365,11 +1367,15 @@ async function startChainPoll(ca){
   pollBootstrapped = false;
   curveAddr = null;
   seenSigs.clear();
-  try {
-    const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://frontend-api-v3.pump.fun/coins/' + ca);
-    const j = await fetch(url).then(r => r.json());
-    if (j && j.bonding_curve) curveAddr = j.bonding_curve;
-  } catch(e){}
+  if (ca === MY_COIN_CA && MY_COIN_CURVE){
+    curveAddr = MY_COIN_CURVE;
+  } else {
+    try {
+      const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://frontend-api-v3.pump.fun/coins/' + ca);
+      const j = await fetch(url).then(r => r.json());
+      if (j && j.bonding_curve) curveAddr = j.bonding_curve;
+    } catch(e){}
+  }
   if (!curveAddr){
     addEvent('sys', 'Locating the coin on-chain — retrying in 15s');
     pollTimer = setTimeout(() => startChainPoll(ca), 15000);
