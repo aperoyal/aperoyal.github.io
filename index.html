@@ -223,7 +223,7 @@
       <canvas id="arena"></canvas>
       <div id="hud">
         <div class="hudChip">🐒 Fighters: <b id="popCount">0</b></div>
-        <div class="hudChip" id="roundTimer">⏱ Round: <b id="timerVal">5:00</b></div>
+        <div class="hudChip" id="roundTimer">⏱ Round <span id="roundNum">1</span>: <b id="timerVal">5:00</b></div>
         <div class="hudChip">💥 Kills: <b id="killCount">0</b></div>
       </div>
       <div id="banner"><div class="big"></div><div class="sub"></div></div>
@@ -890,24 +890,38 @@ function killMonkey(m, killer, how){
 function checkVictory(){
   if (roundHadBattle && monkeys.length === 1) declareWinner(monkeys[0], 'LAST APE STANDING');
 }
+let roundNumber = 1;
+let newRoundPending = false;
 function declareWinner(m, label){
   sfx('win');
   showBanner('🏆 ' + label, `${m.name} · ${m.kills} kills`);
-  addEvent('win', `🏆 ${label}: ${m.name} wins the round with ${m.kills} kills!`);
+  addEvent('win', `🏆 ${label}: ${m.name} wins round ${roundNumber} with ${m.kills} kills!`);
   champions.unshift({ wallet: m.name, kills: m.kills, t: Date.now() });
   champions = champions.slice(0, 12);
   try { localStorage.setItem('mbr_champs', JSON.stringify(champions)); } catch(e){}
   renderChamps();
-  m.hp = m.maxHp;
-  m.kills = 0;
+  roundHadBattle = false;
+  roundEndsAt = Date.now() + ROUND_MS + 6000;  // pause the clock through the intermission
+  if (!newRoundPending){
+    newRoundPending = true;
+    setTimeout(startNewRound, 6000);           // short intermission, then the next round
+  }
+}
+function startNewRound(){
+  newRoundPending = false;
+  roundNumber++;
+  monkeys.forEach(mk => { mk.hp = mk.maxHp; mk.kills = 0; });
   roundHadBattle = false;
   roundEndsAt = Date.now() + ROUND_MS;
+  showBanner('⚔️ ROUND ' + roundNumber, 'All apes healed — FIGHT!');
+  addEvent('win', `⚔️ Round ${roundNumber} begins — every ape fully healed. Fight!`);
+  sfx('promo');
 }
 function endRoundByTimer(){
+  if (newRoundPending) return;
   if (monkeys.length >= 2){
     const lead = [...monkeys].sort((a,b) => b.kills - a.kills || b.hp - a.hp)[0];
     declareWinner(lead, 'ROUND CHAMPION');
-    monkeys.forEach(mk => mk.hp = mk.maxHp);
   } else {
     roundEndsAt = Date.now() + ROUND_MS;
   }
@@ -1024,6 +1038,7 @@ function update(){
   const remain = Math.max(0, roundEndsAt - now);
   const mm = Math.floor(remain/60000), ss = Math.floor(remain%60000/1000);
   document.getElementById('timerVal').textContent = `${mm}:${String(ss).padStart(2,'0')}`;
+  document.getElementById('roundNum').textContent = roundNumber;
 }
 
 /* ============ RENDER ============ */
