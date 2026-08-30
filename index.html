@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>APEROYAL — your bag sets your rank</title>
+<link rel="icon" type="image/png" href="logo-96.png">
+<meta property="og:title" content="APEROYAL — your bag sets your rank">
+<meta property="og:description" content="Every buy spawns an ape into a live battle arena. Bigger bag = higher rank. The biggest holder wears the crown.">
+<meta property="og:image" content="https://cresscit.com/logo-512.png">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root{
     --bg:#0a0812; --bg2:#0f0b1c; --panel:#141024; --panel2:#0f0b1c; --border:#2a2145;
@@ -23,8 +28,12 @@
     background:rgba(10,8,18,.92); backdrop-filter:blur(8px);
     border-bottom:1px solid var(--border); flex-wrap:wrap;
   }
-  header h1{font-size:19px; letter-spacing:2px; white-space:nowrap; font-weight:900;}
+  header h1{font-size:19px; letter-spacing:2px; white-space:nowrap; font-weight:900; display:flex; align-items:center; gap:9px;}
   header h1 .ape{color:var(--gold);}
+  header h1 img{
+    height:34px; width:34px; border-radius:50%;
+    box-shadow:0 0 10px rgba(255,215,94,.45); flex-shrink:0;
+  }
   #caInput{
     flex:1; min-width:200px; background:var(--panel2); border:1px solid var(--border);
     color:var(--text); padding:8px 12px; border-radius:8px; font-family:monospace; font-size:13px;
@@ -187,7 +196,7 @@
 <body>
 
 <header>
-  <h1>🐵 <span class="ape">APE</span>ROYAL</h1>
+  <h1><img src="logo-96.png" alt="Ape Royal coin logo"> <span class="ape">APE</span>ROYAL</h1>
   <input id="caInput" placeholder="Paste a pump.fun contract address (CA)..." spellcheck="false">
   <button id="connectBtn">Connect</button>
   <button id="demoBtn" class="secondary">Demo Mode</button>
@@ -196,6 +205,7 @@
 </header>
 
 <div class="hero">
+  <img src="logo-512.png" alt="Ape Royal coin" style="height:130px;width:130px;border-radius:50%;box-shadow:0 0 40px rgba(255,215,94,.35);margin-bottom:22px;">
   <div class="kicker">Buy-to-spawn battle arena · pump.fun · Solana</div>
   <h2>YOUR BAG<br>SETS YOUR <span class="g">RANK.</span></h2>
   <p>Every buy releases an ape into the arena. The more you hold, the higher your ape climbs the royal ladder — from <b>Peasant</b> to <b>King Ape</b>. Higher ranks hit harder, heal faster, and wear the crown in front of everyone watching. Sell, and your title is stripped on the spot.</p>
