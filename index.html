@@ -252,7 +252,7 @@
     <div class="step">
       <div class="num">02</div>
       <h4>YOUR APE FIGHTS</h4>
-      <p>Apes battle around the clock while the page is open. Every kill earns <b>valor</b> — and valor counts toward your next promotion, so a small bag with big kills still climbs. Each kill also gets filled at the <b>OTC desk</b>: a pair of trophy shares in a random ticker, from meme-stock commons to the legendary $BRK.A.</p>
+      <p>Apes battle around the clock while the page is open. Every kill earns <b>valor</b> — and valor counts toward your next promotion, so a small bag with big kills still climbs. Each kill also gets filled at the <b>OTC desk</b>: one trophy share in a random ticker, from meme-stock commons to the legendary $BRK.A.</p>
     </div>
     <div class="step">
       <div class="num">03</div>
@@ -360,9 +360,9 @@ function rollStockTrophy(){
 }
 function awardStockTrophy(killer){
   const { ticker, tier } = rollStockTrophy();
-  killer.stocks[ticker] = (killer.stocks[ticker] || 0) + 2; // a pair of shares per kill
+  killer.stocks[ticker] = (killer.stocks[ticker] || 0) + 1; // one share per kill
   const flair = tier === 'legendary' ? '💎 LEGENDARY FILL' : tier === 'rare' ? '⭐ rare fill' : 'fill';
-  addEvent('otc', `🏦 OTC desk ${flair}: ${killer.name} bagged a pair of $${ticker} (holds ${killer.stocks[ticker]})`);
+  addEvent('otc', `🏦 OTC desk ${flair}: ${killer.name} bagged a share of $${ticker} (holds ${killer.stocks[ticker]})`);
 }
 function topStock(m){
   let best = null;
