@@ -1573,7 +1573,13 @@ function stopDemo(){
   document.getElementById('demoBtn').textContent = 'Demo Mode';
 }
 document.getElementById('demoBtn').addEventListener('click', () => {
-  if (demoTimer){ stopDemo(); setStatus(wsAlive ? 'LIVE · ' + shortWallet(subscribedCA) : 'offline', wsAlive ? 'live' : ''); return; }
+  if (demoTimer){
+    stopDemo();
+    // reconnect to the real coin — starting demo tore the live feed down
+    const ca = ((new URLSearchParams(location.search).get('ca')) || MY_COIN_CA).trim();
+    if (ca){ connect(ca); } else { setStatus('offline', ''); }
+    return;
+  }
   if (ws){ subscribedCA = null; try{ ws.close(); }catch(e){} ws = null; }
   stopChainPoll();
   document.getElementById('demoBtn').classList.add('active-demo');
