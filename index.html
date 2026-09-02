@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEROYAL — your bag sets your rank</title>
+<title>APEROYALE — your bag sets your rank</title>
 <link rel="icon" type="image/png" href="logo-96.png">
-<meta property="og:title" content="APEROYAL — your bag sets your rank">
+<meta property="og:title" content="APEROYALE — your bag sets your rank">
 <meta property="og:description" content="Every buy spawns an ape into a live battle arena. Bigger bag = higher rank. The biggest holder wears the crown.">
 <meta property="og:image" content="https://cresscit.com/logo-512.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -143,6 +143,7 @@
   .evt.sell{border-left-color:var(--red);}
   .evt.shield{border-left-color:var(--blue); background:#101a2e;}
   .evt.kill{border-left-color:var(--gold);}
+  .evt.otc{border-left-color:#7ec8ff;}
   .evt.rank{border-left-color:var(--purple); background:#191233;}
   .evt.win{border-left-color:var(--gold); background:#2a2410; color:var(--gold);}
   .evt.sys{border-left-color:var(--blue); color:var(--dim);}
@@ -196,7 +197,7 @@
 <body>
 
 <header>
-  <h1><img src="logo-96.png" alt="Ape Royal coin logo"> <span class="ape">APE</span>ROYAL</h1>
+  <h1><img src="logo-96.png" alt="Ape Royale coin logo"> <span class="ape">APE</span>ROYALE</h1>
   <input id="caInput" placeholder="Paste a pump.fun contract address (CA)..." spellcheck="false">
   <button id="connectBtn">Connect</button>
   <button id="demoBtn" class="secondary">Demo Mode</button>
@@ -205,7 +206,7 @@
 </header>
 
 <div class="hero">
-  <img src="logo-512.png" alt="Ape Royal coin" style="height:130px;width:130px;border-radius:50%;box-shadow:0 0 40px rgba(255,215,94,.35);margin-bottom:22px;">
+  <img src="logo-512.png" alt="Ape Royale coin" style="height:130px;width:130px;border-radius:50%;box-shadow:0 0 40px rgba(255,215,94,.35);margin-bottom:22px;">
   <div class="kicker">Buy-to-spawn battle arena · pump.fun · Solana</div>
   <h2>YOUR BAG<br>SETS YOUR <span class="g">RANK.</span></h2>
   <p>Every buy releases an ape into the arena. The more you hold, the higher your ape climbs the royal ladder — from <b>Peasant</b> to <b>King Ape</b>. Higher ranks hit harder, heal faster, and wear the crown in front of everyone watching. Sell, and your title is stripped on the spot.</p>
@@ -251,7 +252,7 @@
     <div class="step">
       <div class="num">02</div>
       <h4>YOUR APE FIGHTS</h4>
-      <p>Apes battle around the clock while the page is open. Every kill earns <b>valor</b> — and valor counts toward your next promotion, so a small bag with big kills still climbs.</p>
+      <p>Apes battle around the clock while the page is open. Every kill earns <b>valor</b> — and valor counts toward your next promotion, so a small bag with big kills still climbs. Each kill also gets filled at the <b>OTC desk</b>: a pair of trophy shares in a random ticker, from meme-stock commons to the legendary $BRK.A.</p>
     </div>
     <div class="step">
       <div class="num">03</div>
@@ -290,7 +291,7 @@
   <div class="secTitle">The War Chest</div>
   <div class="chest">
     <h4>💰 Creator fees flow back to the kingdom.</h4>
-    <p>Every pump.fun trade pays the coin's creator a fee. The Aperoyal war chest pledge: <b>a share of creator fees funds prizes for the arena</b> — weekly drops to the top killers on the champions board and the highest lords of the Royal Court. The exact split and schedule are posted in the community channels before each round. No contracts, no lockups, no promises of profit — just the dev putting trading fees back into the game that drives them.</p>
+    <p>Every pump.fun trade pays the coin's creator a fee. The Aperoyale war chest pledge: <b>a share of creator fees funds prizes for the arena</b> — weekly drops to the top killers on the champions board and the highest lords of the Royal Court. The exact split and schedule are posted in the community channels before each round. No contracts, no lockups, no promises of profit — just the dev putting trading fees back into the game that drives them.</p>
   </div>
 </section>
 
@@ -300,7 +301,7 @@
   <div class="talk">
     <div class="talkCard">
       <h5>This is a memecoin.</h5>
-      <p>Aperoyal is a game layered on a pump.fun token. Ranks, capes and crowns are cosmetic and social — they are not equity, yield, or a claim on anything. Never spend what you can't afford to lose.</p>
+      <p>Aperoyale is a game layered on a pump.fun token. Ranks, capes, crowns and OTC-desk stock trophies are cosmetic and social — they are not equity, real shares, yield, or a claim on anything. Never spend what you can't afford to lose.</p>
     </div>
     <div class="talkCard">
       <h5>The arena sees what it sees.</h5>
@@ -319,7 +320,7 @@
 
 <footer>
   <div id="footerCa">CA: <span class="ca">not set — launching soon</span></div>
-  <div style="margin-top:8px">APEROYAL · the arena never sleeps 🍌</div>
+  <div style="margin-top:8px">APEROYALE · the arena never sleeps 🍌</div>
 </footer>
 
 <script>
@@ -344,6 +345,30 @@ const RPC_URLS = [
   'https://api.mainnet-beta.solana.com',
 ];
 const VALOR_PER_KILL = 0.15;   // SOL-equivalent rank credit per kill
+
+/* ============ OTC DESK (cosmetic stock trophies per kill) ============ */
+const OTC_STOCKS = {
+  common:    ['GME','AMC','BB','NOK','PLTR','HOOD','SOFI','MARA','RIOT','COIN','DKNG','RBLX','SNAP','F','T'],
+  rare:      ['TSLA','NVDA','AAPL','MSFT','AMZN','GOOGL','META','NFLX','AMD','MSTR'],
+  legendary: ['BRK.A']
+};
+function rollStockTrophy(){
+  const r = Math.random();
+  const tier = r < 0.02 ? 'legendary' : r < 0.20 ? 'rare' : 'common';
+  const list = OTC_STOCKS[tier];
+  return { ticker: list[Math.floor(Math.random() * list.length)], tier };
+}
+function awardStockTrophy(killer){
+  const { ticker, tier } = rollStockTrophy();
+  killer.stocks[ticker] = (killer.stocks[ticker] || 0) + 2; // a pair of shares per kill
+  const flair = tier === 'legendary' ? '💎 LEGENDARY FILL' : tier === 'rare' ? '⭐ rare fill' : 'fill';
+  addEvent('otc', `🏦 OTC desk ${flair}: ${killer.name} bagged a pair of $${ticker} (holds ${killer.stocks[ticker]})`);
+}
+function topStock(m){
+  let best = null;
+  for (const t in m.stocks) if (!best || m.stocks[t] > m.stocks[best]) best = t;
+  return best ? `${m.stocks[best]}× $${best}` : '';
+}
 
 const RANKS = [
   { name:'Peasant',  icon:'🐒', need:0,    dmg:1.0,  regen:0,   color:'#8d82ab' },
@@ -544,6 +569,11 @@ function rankIndex(score){
 
 function resize(){
   const r = canvas.parentElement.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2){
+    // layout not ready yet — retry until the arena has a real size
+    requestAnimationFrame(resize);
+    return;
+  }
   W = canvas.width = r.width; H = canvas.height = r.height;
   makeGrass();
   makeScenery();
@@ -766,7 +796,8 @@ function makeMonkey(wallet, solAmount){
     invested: solAmount,
     valor: 0,
     rank: 0,
-    tenure: 0
+    tenure: 0,
+    stocks: {}
   };
   m.rank = rankIndex(m.invested);
   return m;
@@ -879,6 +910,7 @@ function killMonkey(m, killer, how){
     killer.valor += VALOR_PER_KILL;
     totalKills++;
     addEvent('kill', `💥 ${killer.name} eliminated ${m.name}! (${killer.kills} kills)`);
+    awardStockTrophy(killer);
     refreshRank(killer, true);
   } else {
     addEvent('kill', `💀 ${m.name} ${how || 'was eliminated'}`);
@@ -896,7 +928,7 @@ function declareWinner(m, label){
   sfx('win');
   showBanner('🏆 ' + label, `${m.name} · ${m.kills} kills`);
   addEvent('win', `🏆 ${label}: ${m.name} wins round ${roundNumber} with ${m.kills} kills!`);
-  champions.unshift({ wallet: m.name, kills: m.kills, t: Date.now() });
+  champions.unshift({ wallet: m.name, kills: m.kills, stock: topStock(m), t: Date.now() });
   champions = champions.slice(0, 12);
   try { localStorage.setItem('mbr_champs', JSON.stringify(champions)); } catch(e){}
   renderChamps();
@@ -1043,7 +1075,7 @@ function update(){
 
 /* ============ RENDER ============ */
 function drawJungle(){
-  if (sceneCanvas) ctx.drawImage(sceneCanvas, 0, 0);
+  if (sceneCanvas && sceneCanvas.width && sceneCanvas.height) ctx.drawImage(sceneCanvas, 0, 0);
   drawGrass(Date.now());
 }
 
@@ -1261,7 +1293,7 @@ function render(){
     ctx.fillText(f.text, f.x, f.y);
   }
   ctx.globalAlpha = 1;
-  if (vignetteCanvas) ctx.drawImage(vignetteCanvas, 0, 0);
+  if (vignetteCanvas && vignetteCanvas.width && vignetteCanvas.height) ctx.drawImage(vignetteCanvas, 0, 0);
   if (monkeys.length === 0){
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(200,190,220,.75)';
@@ -1270,7 +1302,11 @@ function render(){
   }
 }
 
-function loop(){ update(); render(); requestAnimationFrame(loop); }
+function loop(){
+  try { update(); render(); }
+  catch (e) { console.error('frame error', e); }
+  requestAnimationFrame(loop);
+}
 
 /* ============ FEED / LEADERBOARD ============ */
 const feedEl = document.getElementById('feed');
@@ -1287,7 +1323,7 @@ function renderChamps(){
   champions.forEach((c, i) => {
     const d = document.createElement('div');
     d.className = 'champ';
-    d.innerHTML = `<span class="crown">${i===0?'👑':'🏅'}</span><span class="wallet">${c.wallet}</span><span class="kills">${c.kills} kills</span>`;
+    d.innerHTML = `<span class="crown">${i===0?'👑':'🏅'}</span><span class="wallet">${c.wallet}</span><span class="kills">${c.kills} kills${c.stock ? ' · 🏦 ' + c.stock : ''}</span>`;
     el.appendChild(d);
   });
 }
@@ -1555,10 +1591,10 @@ const bootCA = (urlCA && urlCA.trim()) || MY_COIN_CA.trim();
 if (bootCA){
   document.getElementById('caInput').style.display = 'none';
   document.getElementById('connectBtn').style.display = 'none';
-  addEvent('sys', 'Welcome to APEROYAL. Every buy releases an ape — your bag sets your rank. 🍌');
+  addEvent('sys', 'Welcome to APEROYALE. Every buy releases an ape — your bag sets your rank. 🍌');
   connect(bootCA);
 } else {
-  addEvent('sys', 'Welcome to APEROYAL. Paste a pump.fun CA and hit Connect — every buy spawns a fighter. 🍌');
+  addEvent('sys', 'Welcome to APEROYALE. Paste a pump.fun CA and hit Connect — every buy spawns a fighter. 🍌');
 }
 addEvent('sys', 'Press G to grant a 🛡 shield to a holder who called out the token (enter the start of their wallet).');
 loop();
